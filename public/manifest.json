@@ -1,0 +1,18 @@
+{
+  "name": "Jeyam Fancy Store",
+  "short_name": "Jeyam Store",
+  "description": "Your one-stop shop for watches, jewelry, gifts, and fancy items",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#dc2626",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
+
