@@ -1,36 +1,21 @@
-import { useState, useEffect } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { STOCK_STATUS_OPTIONS } from '../utils/productManager';
-import { getProducts } from '../utils/productManager';
 
 /**
  * ProductForm Component
- * Form for adding/editing products
+ * Polished form with violet focus rings and clean validation states
  */
 export default function ProductForm({ product, categories, onSave, onCancel }) {
   const isEditMode = !!product;
 
-  // Form validation schema
   const validationSchema = Yup.object({
-    name: Yup.string()
-      .required('Product name is required')
-      .min(2, 'Name must be at least 2 characters'),
-    image: Yup.string()
-      .required('Image URL is required')
-      .url('Must be a valid URL'),
-    price: Yup.number()
-      .required('Price is required')
-      .positive('Price must be positive')
-      .integer('Price must be a whole number'),
-    unit: Yup.string()
-      .required('Unit is required')
-      .oneOf(['piece', 'set', 'pair'], 'Unit must be piece, set, or pair'),
-    categoryId: Yup.string()
-      .required('Category is required'),
-    stockStatus: Yup.string()
-      .required('Stock status is required')
-      .oneOf(STOCK_STATUS_OPTIONS, 'Invalid stock status'),
+    name: Yup.string().required('Product name is required').min(2, 'Name must be at least 2 characters'),
+    image: Yup.string().required('Image URL is required').url('Must be a valid URL'),
+    price: Yup.number().required('Price is required').positive('Price must be positive').integer('Price must be a whole number'),
+    unit: Yup.string().required('Unit is required').oneOf(['piece', 'set', 'pair'], 'Unit must be piece, set, or pair'),
+    categoryId: Yup.string().required('Category is required'),
+    stockStatus: Yup.string().required('Stock status is required').oneOf(STOCK_STATUS_OPTIONS, 'Invalid stock status'),
   });
 
   const formik = useFormik({
@@ -45,178 +30,119 @@ export default function ProductForm({ product, categories, onSave, onCancel }) {
     validationSchema,
     enableReinitialize: true,
     onSubmit: (values) => {
-      const productData = {
+      onSave({
         ...values,
         price: Number(values.price),
         id: product?.id || `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      };
-      onSave(productData);
+      });
     },
   });
 
+  /* ── Helper: field wrapper ── */
+  const Field = ({ id, label, required, error, children }) => (
+    <div>
+      <label htmlFor={id} className="block text-sm font-semibold text-slate-700 mb-1.5">
+        {label} {required && <span className="text-primary-600">*</span>}
+      </label>
+      {children}
+      {error && (
+        <p className="mt-1 text-xs text-error-600 font-medium flex items-center gap-1">
+          <span>!</span>{error}
+        </p>
+      )}
+    </div>
+  );
+
+  const inputClass = (field) =>
+    `input-field ${formik.touched[field] && formik.errors[field] ? 'input-error' : ''}`;
+
   return (
-    <form onSubmit={formik.handleSubmit} className="space-y-4">
+    <form onSubmit={formik.handleSubmit} className="space-y-5">
       {/* Product Name */}
-      <div>
-        <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-          Product Name <span className="text-red-500">*</span>
-        </label>
+      <Field id="name" label="Product Name" required error={formik.touched.name && formik.errors.name}>
         <input
-          type="text"
-          id="name"
-          name="name"
-          value={formik.values.name}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder="Enter product name"
+          type="text" id="name" name="name"
+          value={formik.values.name} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          className={inputClass('name')} placeholder="Enter product name"
         />
-        {formik.touched.name && formik.errors.name && (
-          <p className="mt-1 text-sm text-red-500">{formik.errors.name}</p>
-        )}
-      </div>
+      </Field>
 
       {/* Image URL */}
-      <div>
-        <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-1">
-          Image URL <span className="text-red-500">*</span>
-        </label>
+      <Field id="image" label="Image URL" required error={formik.touched.image && formik.errors.image}>
         <input
-          type="url"
-          id="image"
-          name="image"
-          value={formik.values.image}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder="https://example.com/image.jpg"
+          type="url" id="image" name="image"
+          value={formik.values.image} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          className={inputClass('image')} placeholder="https://example.com/image.jpg"
         />
-        {formik.touched.image && formik.errors.image && (
-          <p className="mt-1 text-sm text-red-500">{formik.errors.image}</p>
-        )}
-        {formik.values.image && (
+        {formik.values.image && !formik.errors.image && (
           <div className="mt-2">
             <img
               src={formik.values.image}
               alt="Preview"
-              className="w-24 h-24 object-cover rounded-lg border border-gray-200"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
+              className="w-24 h-24 object-cover rounded-xl border-2 border-primary-200 shadow-sm"
+              onError={(e) => { e.target.style.display = 'none'; }}
             />
           </div>
         )}
-      </div>
+      </Field>
 
       {/* Price */}
-      <div>
-        <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">
-          Price (₹) <span className="text-red-500">*</span>
-        </label>
+      <Field id="price" label="Price (₹)" required error={formik.touched.price && formik.errors.price}>
         <input
-          type="number"
-          id="price"
-          name="price"
-          value={formik.values.price}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          placeholder="0"
-          min="0"
-          step="1"
+          type="number" id="price" name="price"
+          value={formik.values.price} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          className={inputClass('price')} placeholder="0" min="0" step="1"
         />
-        {formik.touched.price && formik.errors.price && (
-          <p className="mt-1 text-sm text-red-500">{formik.errors.price}</p>
-        )}
-      </div>
+      </Field>
 
       {/* Unit */}
-      <div>
-        <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">
-          Unit <span className="text-red-500">*</span>
-        </label>
+      <Field id="unit" label="Unit" required error={formik.touched.unit && formik.errors.unit}>
         <select
-          id="unit"
-          name="unit"
-          value={formik.values.unit}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          id="unit" name="unit"
+          value={formik.values.unit} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          className={inputClass('unit')}
         >
           <option value="piece">Piece</option>
           <option value="set">Set</option>
           <option value="pair">Pair</option>
         </select>
-        {formik.touched.unit && formik.errors.unit && (
-          <p className="mt-1 text-sm text-red-500">{formik.errors.unit}</p>
-        )}
-      </div>
+      </Field>
 
       {/* Category */}
-      <div>
-        <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-1">
-          Category <span className="text-red-500">*</span>
-        </label>
+      <Field id="categoryId" label="Category" required error={formik.touched.categoryId && formik.errors.categoryId}>
         <select
-          id="categoryId"
-          name="categoryId"
-          value={formik.values.categoryId}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          id="categoryId" name="categoryId"
+          value={formik.values.categoryId} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          className={inputClass('categoryId')}
         >
-          {categories.map((category) => (
-            <option key={category.id} value={category.id}>
-              {category.name}
-            </option>
+          {categories.map((cat) => (
+            <option key={cat.id} value={cat.id}>{cat.name}</option>
           ))}
         </select>
-        {formik.touched.categoryId && formik.errors.categoryId && (
-          <p className="mt-1 text-sm text-red-500">{formik.errors.categoryId}</p>
-        )}
-      </div>
+      </Field>
 
       {/* Stock Status */}
-      <div>
-        <label htmlFor="stockStatus" className="block text-sm font-medium text-gray-700 mb-1">
-          Stock Status <span className="text-red-500">*</span>
-        </label>
+      <Field id="stockStatus" label="Stock Status" required error={formik.touched.stockStatus && formik.errors.stockStatus}>
         <select
-          id="stockStatus"
-          name="stockStatus"
-          value={formik.values.stockStatus}
-          onChange={formik.handleChange}
-          onBlur={formik.handleBlur}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+          id="stockStatus" name="stockStatus"
+          value={formik.values.stockStatus} onChange={formik.handleChange} onBlur={formik.handleBlur}
+          className={inputClass('stockStatus')}
         >
-          {STOCK_STATUS_OPTIONS.map((status) => (
-            <option key={status} value={status}>
-              {status}
-            </option>
+          {STOCK_STATUS_OPTIONS.map((s) => (
+            <option key={s} value={s}>{s}</option>
           ))}
         </select>
-        {formik.touched.stockStatus && formik.errors.stockStatus && (
-          <p className="mt-1 text-sm text-red-500">{formik.errors.stockStatus}</p>
-        )}
-      </div>
+      </Field>
 
-      {/* Action Buttons */}
-      <div className="flex gap-3 pt-4">
-        <button
-          type="submit"
-          className="flex-1 btn-primary"
-        >
+      {/* Actions */}
+      <div className="flex gap-3 pt-2">
+        <button type="submit" className="flex-1 btn-primary py-2.5">
           {isEditMode ? 'Update Product' : 'Add Product'}
         </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          className="flex-1 btn-secondary"
-        >
+        <button type="button" onClick={onCancel} className="flex-1 btn-secondary py-2.5">
           Cancel
         </button>
       </div>
     </form>
   );
 }
-
