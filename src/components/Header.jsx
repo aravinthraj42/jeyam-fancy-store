@@ -1,12 +1,11 @@
 import { ShoppingCart } from '@mui/icons-material';
 import { useCart } from '../context/CartContext';
-import ProfileMenu from './ProfileMenu';
 
 /**
  * Header Component
  * Glassy sticky header with gradient brand name, styled cart button
  */
-export default function Header({ onCartClick, onAdminClick, onLoginClick }) {
+export default function Header({ onCartClick }) {
   const { totalItems } = useCart();
 
   return (
@@ -40,9 +39,6 @@ export default function Header({ onCartClick, onAdminClick, onLoginClick }) {
               </span>
             )}
           </button>
-
-          {/* Profile Menu */}
-          <ProfileMenu onAdminClick={onAdminClick} onLoginClick={onLoginClick} />
         </div>
       </div>
 

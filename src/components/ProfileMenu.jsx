@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
-import { AccountCircle, Logout, AdminPanelSettings, Login } from '@mui/icons-material';
+import { AccountCircle, Logout, Login } from '@mui/icons-material';
 import { useAuth } from '../context/AuthContext';
 
 /**
  * ProfileMenu Component
  * Animated dropdown menu with polished violet hover states
  */
-export default function ProfileMenu({ onAdminClick, onLoginClick }) {
+export default function ProfileMenu({ onLoginClick }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const { user, logout, isAuthenticated } = useAuth();
@@ -64,13 +64,6 @@ export default function ProfileMenu({ onAdminClick, onLoginClick }) {
 
               {/* Admin options */}
               <div className="py-1">
-                <button
-                  onClick={() => { setIsOpen(false); if (onAdminClick) onAdminClick(); }}
-                  className="w-full px-4 py-2.5 text-left text-sm text-slate-700 hover:bg-primary-50 hover:text-primary-700 flex items-center gap-2.5 transition-colors duration-150"
-                >
-                  <AdminPanelSettings fontSize="small" className="text-primary-500" />
-                  <span className="font-medium">Admin Panel</span>
-                </button>
                 <button
                   onClick={handleLogout}
                   className="w-full px-4 py-2.5 text-left text-sm text-error-600 hover:bg-error-50 flex items-center gap-2.5 transition-colors duration-150"

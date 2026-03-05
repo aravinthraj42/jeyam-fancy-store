@@ -20,6 +20,74 @@ function AppContent() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState([]);
   const { isAuthenticated, isLoading } = useAuth();
+  const [isFromAdminRoute, setIsFromAdminRoute] = useState(false);
+
+  // Handle URL-based routing
+  useEffect(() => {
+    const path = window.location.pathname;
+    
+    // Check if user is on /admin/login route
+    if (path === '/admin/login') {
+      setShowLogin(true);
+      setShowCart(false);
+      setShowAdmin(false);
+      setIsFromAdminRoute(true);
+    } else if (path === '/admin') {
+      // If on /admin route, check authentication
+      if (isAuthenticated) {
+        setShowAdmin(true);
+        setShowLogin(false);
+        setShowCart(false);
+        setIsFromAdminRoute(false);
+      } else {
+        // Not authenticated, redirect to /admin/login
+        window.history.replaceState({}, '', '/admin/login');
+        setShowLogin(true);
+        setShowAdmin(false);
+        setShowCart(false);
+        setIsFromAdminRoute(true);
+      }
+    } else {
+      // Reset to home view if not on admin routes
+      setShowLogin(false);
+      setShowAdmin(false);
+      setIsFromAdminRoute(false);
+    }
+  }, [isAuthenticated]);
+
+  // Listen for browser back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      if (path === '/admin/login') {
+        setShowLogin(true);
+        setShowCart(false);
+        setShowAdmin(false);
+        setIsFromAdminRoute(true);
+      } else if (path === '/admin') {
+        if (isAuthenticated) {
+          setShowAdmin(true);
+          setShowLogin(false);
+          setShowCart(false);
+          setIsFromAdminRoute(false);
+        } else {
+          window.history.replaceState({}, '', '/admin/login');
+          setShowLogin(true);
+          setShowAdmin(false);
+          setShowCart(false);
+          setIsFromAdminRoute(true);
+        }
+      } else {
+        setShowLogin(false);
+        setShowCart(false);
+        setShowAdmin(false);
+        setIsFromAdminRoute(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [isAuthenticated]);
 
   // Load categories from productManager (localStorage or JSON)
   useEffect(() => {
@@ -63,28 +131,38 @@ function AppContent() {
     setShowCart(false);
     setShowAdmin(false);
     setShowLogin(false);
+    setIsFromAdminRoute(false);
+    // Update URL to home
+    window.history.pushState({}, '', '/');
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleAdminClick = () => {
-    if (isAuthenticated) {
-      setShowAdmin(true);
-      setShowCart(false);
-      setShowLogin(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
   };
 
   const handleLoginClick = () => {
     setShowLogin(true);
     setShowCart(false);
     setShowAdmin(false);
+    setIsFromAdminRoute(false);
+    // Update URL to login
+    window.history.pushState({}, '', '/login');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLoginSuccess = () => {
-    // Login successful, close login page and return to store
-    setShowLogin(false);
+    // Login successful
+    if (isFromAdminRoute || window.location.pathname === '/admin/login') {
+      // If user came from /admin/login, redirect to admin panel
+      setShowLogin(false);
+      setShowAdmin(true);
+      setShowCart(false);
+      setIsFromAdminRoute(false);
+      // Update URL to admin
+      window.history.pushState({}, '', '/admin');
+    } else {
+      // Otherwise, return to store
+      setShowLogin(false);
+      setIsFromAdminRoute(false);
+      window.history.pushState({}, '', '/');
+    }
   };
 
   const handleBackFromLogin = () => {
@@ -116,9 +194,11 @@ function AppContent() {
     // Show admin panel (requires authentication)
     if (showAdmin) {
       if (!isAuthenticated) {
-        // If not authenticated, redirect to login
+        // If not authenticated, redirect to /admin/login
+        window.history.pushState({}, '', '/admin/login');
         setShowLogin(true);
         setShowAdmin(false);
+        setIsFromAdminRoute(true);
         return <LoginPage onLoginSuccess={handleLoginSuccess} onBack={handleBackFromLogin} />;
       }
       return <AdminPanel onBack={handleBackToHome} />;
@@ -134,8 +214,6 @@ function AppContent() {
         {/* Header */}
         <Header
           onCartClick={handleCartClick}
-          onAdminClick={handleAdminClick}
-          onLoginClick={handleLoginClick}
         />
 
         {/* Category Tabs */}
