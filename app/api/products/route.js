@@ -21,13 +21,18 @@ export async function GET(request) {
     return NextResponse.json({ success: true, data: products });
   } catch (error) {
     console.error('Error fetching products:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error.message || 'Unknown error';
+    const statusCode = errorMessage.includes('environment variable') ? 500 : 500;
+    
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to fetch products',
-        message: error.message,
+        message: errorMessage,
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

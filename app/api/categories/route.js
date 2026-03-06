@@ -11,13 +11,18 @@ export async function GET(request) {
     return NextResponse.json({ success: true, data: categories });
   } catch (error) {
     console.error('Error fetching categories:', error);
+    
+    // Provide more detailed error information
+    const errorMessage = error.message || 'Unknown error';
+    const statusCode = errorMessage.includes('environment variable') ? 500 : 500;
+    
     return NextResponse.json(
       {
         success: false,
         error: 'Failed to fetch categories',
-        message: error.message,
+        message: errorMessage,
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }
