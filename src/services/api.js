@@ -16,13 +16,19 @@ export async function fetchProducts(categoryId = null) {
       ? `/api/products?categoryId=${encodeURIComponent(categoryId)}`
       : '/api/products';
     
-    const response = await fetch(url);
-    const data = await response.json();
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch products');
+      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch products' }));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
     
+    const data = await response.json();
     return data.data || [];
   } catch (error) {
     console.error('Error fetching products:', error);
@@ -154,13 +160,19 @@ export async function deleteProduct(id) {
  */
 export async function fetchCategories() {
   try {
-    const response = await fetch('/api/categories');
-    const data = await response.json();
+    const response = await fetch('/api/categories', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (!response.ok) {
-      throw new Error(data.message || 'Failed to fetch categories');
+      const errorData = await response.json().catch(() => ({ message: 'Failed to fetch categories' }));
+      throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
     }
     
+    const data = await response.json();
     return data.data || [];
   } catch (error) {
     console.error('Error fetching categories:', error);

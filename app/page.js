@@ -12,10 +12,12 @@ export default function HomePage() {
   const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       const [categoriesData, productsData] = await Promise.all([
         fetchCategories(),
         fetchProducts(),
@@ -36,6 +38,7 @@ export default function HomePage() {
       }
     } catch (error) {
       console.error('Error loading data:', error);
+      setError(error.message || 'Failed to load store data. Please check your connection and try again.');
     } finally {
       setLoading(false);
     }
@@ -65,6 +68,32 @@ export default function HomePage() {
           </div>
           <div className="w-8 h-8 mx-auto mb-3 border-3 border-primary-200 border-t-primary-600 rounded-full animate-spin" style={{ borderWidth: '3px' }} />
           <p className="text-slate-500 font-medium text-sm">Loading store…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-slate-50 to-secondary-50 flex items-center justify-center p-4">
+        <div className="text-center animate-fade-in max-w-md">
+          <div className="w-16 h-16 mx-auto mb-5 rounded-2xl bg-error-50 flex items-center justify-center shadow-lg">
+            <span className="text-error-600 font-extrabold text-2xl">!</span>
+          </div>
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Unable to Load Store</h2>
+          <p className="text-slate-600 mb-4">{error}</p>
+          <button
+            onClick={() => {
+              setError(null);
+              loadData();
+            }}
+            className="btn-primary px-6 py-2"
+          >
+            Retry
+          </button>
+          <p className="text-xs text-slate-400 mt-4">
+            If this problem persists, please check the browser console for more details.
+          </p>
         </div>
       </div>
     );
