@@ -8,9 +8,10 @@ import StickyCartBar from '../src/components/StickyCartBar';
 import { fetchProducts, fetchCategories } from '../src/services/api';
 
 export default function HomePage() {
+  const ALL_CATEGORY_ID = 'all';
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedCategory, setSelectedCategory] = useState(ALL_CATEGORY_ID);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -33,8 +34,9 @@ export default function HomePage() {
       setCategories(transformedCategories);
       setProducts(productsData);
 
-      if (transformedCategories.length > 0 && !selectedCategory) {
-        setSelectedCategory(transformedCategories[0].id);
+      // Ensure "All" is selected by default if no category is selected
+      if (!selectedCategory || selectedCategory === ALL_CATEGORY_ID) {
+        setSelectedCategory(ALL_CATEGORY_ID);
       }
     } catch (error) {
       console.error('Error loading data:', error);
@@ -42,7 +44,7 @@ export default function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedCategory]);
+  }, []); // Removed selectedCategory dependency - only load on mount
 
   useEffect(() => {
     loadData();
@@ -55,6 +57,9 @@ export default function HomePage() {
 
   const getCurrentCategoryItems = () => {
     if (!selectedCategory) return [];
+    if (selectedCategory === ALL_CATEGORY_ID) {
+      return products; // Return all products when "All" is selected
+    }
     const category = categories.find((cat) => cat.id === selectedCategory);
     return category ? category.items : [];
   };
@@ -116,9 +121,11 @@ export default function HomePage() {
       {/* Items Grid */}
       <main className="container mx-auto px-4 py-6">
         {selectedCategory && (
-          <>
-            <h2 className="text-2xl font-bold text-slate-900 mb-6">
-              {categories.find((cat) => cat.id === selectedCategory)?.name || 'Items'}
+          <div key={selectedCategory} className="animate-slide-up">
+            <h2 className="text-2xl font-bold text-slate-900 mb-6 transition-colors duration-200">
+              {selectedCategory === ALL_CATEGORY_ID 
+                ? 'All Products' 
+                : categories.find((cat) => cat.id === selectedCategory)?.name || 'Items'}
             </h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -132,7 +139,7 @@ export default function HomePage() {
                 <p className="text-slate-400 text-sm">No items in this category yet.</p>
               </div>
             )}
-          </>
+          </div>
         )}
       </main>
 
