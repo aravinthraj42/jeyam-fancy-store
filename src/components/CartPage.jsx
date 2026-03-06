@@ -1,23 +1,83 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
 import { ArrowBack, WhatsApp, ShoppingCartOutlined } from '@mui/icons-material';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import { useCart } from '../context/CartContext';
-import { sendOrderViaWhatsApp } from '../utils/whatsapp';
 import { Add, Remove } from '@mui/icons-material';
+
+const ADMIN_NUMBER = '918124483546'; // Hardcoded admin number
+
+function formatOrderMessage(orderData) {
+  const { customerInfo, items, totalAmount } = orderData;
+
+  let message = `New Order - Jeyam Fancy Store\n\n`;
+  message += `Customer Details:\n`;
+  message += `Name: ${customerInfo.name}\n`;
+  message += `Phone: ${customerInfo.phone}\n`;
+  message += `Email: ${customerInfo.email || 'N/A'}\n`;
+  message += `Address: ${customerInfo.address}\n`;
+  message += `Pincode: ${customerInfo.pincode}\n\n`;
+  message += `Items:\n`;
+
+  items.forEach((cartItem) => {
+    const { item, quantity } = cartItem;
+    const itemTotal = item.price * quantity;
+    const unitText = quantity === 1 ? item.unit : `${item.unit}s`;
+    message += `- ${item.name} - ${quantity} ${unitText} - ₹${itemTotal}\n`;
+  });
+
+  message += `\nTotal Amount: ₹${totalAmount}`;
+
+  return message;
+}
+
+function sendOrderViaWhatsApp(orderData) {
+  const message = formatOrderMessage(orderData);
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/${ADMIN_NUMBER}?text=${encodedMessage}`;
+  
+  window.open(whatsappUrl, '_blank');
+}
 
 /**
  * CartPage Component
  * Polished cart with elevated cards, purple price accents, and green WhatsApp CTA
  */
-export default function CartPage({ onBack }) {
+export default function CartPageContent() {
+  const router = useRouter();
   const { items, totalAmount, updateQuantity, clearCart } = useCart();
 
   const validationSchema = Yup.object({
-    name: Yup.string().required('Name is required').min(2, 'Name must be at least 2 characters'),
-    phone: Yup.string().required('Phone number is required').matches(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
-    email: Yup.string().email('Invalid email address').optional(),
-    address: Yup.string().required('Address is required').min(10, 'Address must be at least 10 characters'),
-    pincode: Yup.string().required('Pincode is required').matches(/^\d{6}$/, 'Pincode must be exactly 6 digits'),
+    name: Yup.string()
+      .required('Name is required')
+      .min(2, 'Name must be at least 2 characters')
+      .max(100, 'Name must be less than 100 characters'),
+    phone: Yup.string()
+      .required('Phone number is required')
+      .matches(/^\d{10}$/, 'Phone number must be exactly 10 digits'),
+    email: Yup.string()
+      .test('email-validation', 'Please enter a valid email address', function(value) {
+        if (!value || value.length === 0) {
+          return true; // Optional field, no validation if empty
+        }
+        return /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(value);
+      }),
+    address: Yup.string()
+      .test('address-validation', 'Address must be at least 10 characters', function(value) {
+        if (!value || value.length === 0) {
+          return true; // Optional field, no validation if empty
+        }
+        return value.length >= 10;
+      }),
+    pincode: Yup.string()
+      .test('pincode-validation', 'Pincode must be exactly 6 digits', function(value) {
+        if (!value || value.length === 0) {
+          return true; // Optional field, no validation if empty
+        }
+        return /^\d{6}$/.test(value);
+      }),
   });
 
   const formik = useFormik({
@@ -28,25 +88,16 @@ export default function CartPage({ onBack }) {
       clearCart();
       formik.resetForm();
       alert('Order placed successfully! Opening WhatsApp...');
+      router.push('/');
     },
   });
 
-  const isFormValid = formik.isValid && formik.dirty;
+  // Only check required fields (name and phone) for form validity
+  const isFormValid = !formik.errors.name && !formik.errors.phone && formik.values.name && formik.values.phone;
   const hasItems = items.length > 0;
   const canPlaceOrder = isFormValid && hasItems;
 
   const handleQuantityChange = (itemId, newQuantity) => updateQuantity(itemId, newQuantity);
-
-  /* ── Helper: form field ── */
-  const Field = ({ id, label, required, error, children }) => (
-    <div>
-      <label htmlFor={id} className="block text-sm font-semibold text-slate-700 mb-1.5">
-        {label} {required && <span className="text-primary-600">*</span>}
-      </label>
-      {children}
-      {error && <p className="mt-1 text-xs text-error-600 font-medium">{error}</p>}
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20">
@@ -54,7 +105,7 @@ export default function CartPage({ onBack }) {
       <div className="bg-white/95 backdrop-blur-sm shadow-header sticky top-0 z-30 border-b border-slate-100">
         <div className="container mx-auto px-4 py-3 flex items-center gap-3">
           <button
-            onClick={onBack}
+            onClick={() => router.push('/')}
             className="p-2 hover:bg-slate-100 rounded-xl transition-colors focus-ring text-slate-600"
             aria-label="Go back"
           >
@@ -69,14 +120,13 @@ export default function CartPage({ onBack }) {
 
       <div className="container mx-auto px-4 py-6">
         {items.length === 0 ? (
-          /* Empty State */
           <div className="text-center py-20">
             <div className="w-20 h-20 mx-auto mb-5 rounded-2xl bg-slate-100 flex items-center justify-center">
               <ShoppingCartOutlined className="text-slate-400" style={{ fontSize: 40 }} />
             </div>
             <h3 className="text-xl font-bold text-slate-700 mb-2">Your cart is empty</h3>
-            <p className="text-slate-400 text-sm mb-6">Looks like you haven't added anything yet.</p>
-            <button onClick={onBack} className="btn-primary px-8 py-2.5">
+            <p className="text-slate-400 text-sm mb-6">Looks like you haven&apos;t added anything yet.</p>
+            <button onClick={() => router.push('/')} className="btn-primary px-8 py-2.5">
               Continue Shopping
             </button>
           </div>
@@ -84,7 +134,7 @@ export default function CartPage({ onBack }) {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Cart Items */}
             <div className="lg:col-span-2 space-y-4">
-              <h3 className="text-base font-semibold text-slate-600 uppercase tracking-wide text-xs mb-3">
+              <h3 className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-3">
                 Cart Items
               </h3>
 
@@ -94,11 +144,11 @@ export default function CartPage({ onBack }) {
                   <div key={item.id} className="card">
                     <div className="flex gap-4">
                       <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden flex-shrink-0">
-                        <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        <img src={item.image || item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-slate-800 line-clamp-2 text-sm mb-0.5">{item.name}</h4>
-                        <p className="text-xs text-slate-400">₹{item.price} per {item.unit}</p>
+                        <p className="text-xs text-slate-400">₹{item.price} per {item.unit || 'piece'}</p>
                         <div className="flex items-center gap-3 mt-3">
                           <button
                             onClick={() => handleQuantityChange(item.id, quantity - 1)}
@@ -137,51 +187,81 @@ export default function CartPage({ onBack }) {
               <div className="card sticky top-24">
                 <h3 className="text-base font-bold text-slate-800 mb-4">Customer Details</h3>
                 <form onSubmit={formik.handleSubmit} className="space-y-4">
-                  <Field id="name" label="Name" required error={formik.touched.name && formik.errors.name}>
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Name <span className="text-primary-600">*</span>
+                    </label>
                     <input
                       type="text" id="name" name="name"
                       value={formik.values.name} onChange={formik.handleChange} onBlur={formik.handleBlur}
                       className={`input-field ${formik.touched.name && formik.errors.name ? 'input-error' : ''}`}
                       placeholder="Your full name"
                     />
-                  </Field>
+                    {formik.touched.name && formik.errors.name && (
+                      <p className="mt-1 text-xs text-error-600 font-medium">{formik.errors.name}</p>
+                    )}
+                  </div>
 
-                  <Field id="phone" label="Phone Number" required error={formik.touched.phone && formik.errors.phone}>
+                  <div>
+                    <label htmlFor="phone" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Phone Number <span className="text-primary-600">*</span>
+                    </label>
                     <input
                       type="tel" id="phone" name="phone"
                       value={formik.values.phone} onChange={formik.handleChange} onBlur={formik.handleBlur}
                       className={`input-field ${formik.touched.phone && formik.errors.phone ? 'input-error' : ''}`}
                       placeholder="10-digit number" maxLength="10"
                     />
-                  </Field>
+                    {formik.touched.phone && formik.errors.phone && (
+                      <p className="mt-1 text-xs text-error-600 font-medium">{formik.errors.phone}</p>
+                    )}
+                  </div>
 
-                  <Field id="email" label="Email" error={formik.touched.email && formik.errors.email}>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Email
+                    </label>
                     <input
                       type="email" id="email" name="email"
                       value={formik.values.email} onChange={formik.handleChange} onBlur={formik.handleBlur}
                       className={`input-field ${formik.touched.email && formik.errors.email ? 'input-error' : ''}`}
                       placeholder="your@email.com (optional)"
                     />
-                  </Field>
+                    {formik.touched.email && formik.errors.email && (
+                      <p className="mt-1 text-xs text-error-600 font-medium">{formik.errors.email}</p>
+                    )}
+                  </div>
 
-                  <Field id="address" label="Address" required error={formik.touched.address && formik.errors.address}>
+                  <div>
+                    <label htmlFor="address" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Address
+                    </label>
                     <textarea
                       id="address" name="address"
                       value={formik.values.address} onChange={formik.handleChange} onBlur={formik.handleBlur}
                       rows="3"
                       className={`input-field resize-none ${formik.touched.address && formik.errors.address ? 'input-error' : ''}`}
-                      placeholder="Complete delivery address"
+                      placeholder="Complete delivery address (optional)"
                     />
-                  </Field>
+                    {formik.touched.address && formik.errors.address && (
+                      <p className="mt-1 text-xs text-error-600 font-medium">{formik.errors.address}</p>
+                    )}
+                  </div>
 
-                  <Field id="pincode" label="Pincode" required error={formik.touched.pincode && formik.errors.pincode}>
+                  <div>
+                    <label htmlFor="pincode" className="block text-sm font-semibold text-slate-700 mb-1.5">
+                      Pincode
+                    </label>
                     <input
                       type="text" id="pincode" name="pincode"
                       value={formik.values.pincode} onChange={formik.handleChange} onBlur={formik.handleBlur}
                       className={`input-field ${formik.touched.pincode && formik.errors.pincode ? 'input-error' : ''}`}
-                      placeholder="6-digit pincode" maxLength="6"
+                      placeholder="6-digit pincode (optional)" maxLength="6"
                     />
-                  </Field>
+                    {formik.touched.pincode && formik.errors.pincode && (
+                      <p className="mt-1 text-xs text-error-600 font-medium">{formik.errors.pincode}</p>
+                    )}
+                  </div>
 
                   {/* WhatsApp CTA */}
                   <button
@@ -211,3 +291,4 @@ export default function CartPage({ onBack }) {
     </div>
   );
 }
+

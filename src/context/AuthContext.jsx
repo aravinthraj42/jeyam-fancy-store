@@ -1,16 +1,39 @@
+'use client';
+
 import { createContext, useContext, useState, useEffect } from 'react';
-import authData from '../data/auth.json';
 
 /**
  * Auth Context for managing authentication state
  * 
  * SECURITY NOTE: This is a frontend-only demo admin system.
- * No real encryption is used. Passwords are stored in plain text in auth.json.
+ * No real encryption is used. Passwords are stored in plain text.
  * This is NOT suitable for production use.
  */
 const AuthContext = createContext();
 
 const AUTH_STORAGE_KEY = 'jeyamFancyStoreAuth';
+
+// Admin credentials (should be moved to environment variables in production)
+const ADMIN_ACCOUNTS = [
+  {
+    id: '1',
+    username: 'admin',
+    password: 'admin123',
+    displayName: 'Admin',
+  },
+  {
+    id: '2',
+    username: 'jeyamfancystore2021',
+    password: 'Password@01',
+    displayName: 'Edilson',
+  },
+  {
+    id: '3',
+    username: 'aravinthraj42',
+    password: 'Password@02',
+    displayName: 'Super Admin',
+  },
+];
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -32,26 +55,24 @@ export function AuthProvider({ children }) {
 
   /**
    * Login function
-   * Validates username and password against auth.json
+   * Validates username and password
    * @param {string} username - Username
    * @param {string} password - Password
    * @returns {Object} { success: boolean, error?: string, user?: Object }
    */
   const login = (username, password) => {
-    // Find user in auth.json
-    const foundUser = authData.find(
-      (u) => u.username === username && u.password === password
+    // Find matching admin account
+    const admin = ADMIN_ACCOUNTS.find(
+      (acc) => acc.username === username && acc.password === password
     );
 
-    if (foundUser) {
-      // Create user object without password
+    if (admin) {
       const userData = {
-        id: foundUser.id,
-        username: foundUser.username,
-        displayName: foundUser.displayName,
+        id: admin.id,
+        username: admin.username,
+        displayName: admin.displayName,
       };
 
-      // Save to localStorage
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(userData));
       setUser(userData);
 

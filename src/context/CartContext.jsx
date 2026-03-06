@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useContext, useReducer, useEffect } from 'react';
 
 // Cart Context for managing cart state globally

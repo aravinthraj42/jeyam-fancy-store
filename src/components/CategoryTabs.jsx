@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * CategoryTabs Component
  * Horizontal scrollable pill tabs with violet active state and smooth transitions
@@ -32,3 +34,4 @@ export default function CategoryTabs({ categories, selectedCategory, onCategoryS
     </div>
   );
 }
+

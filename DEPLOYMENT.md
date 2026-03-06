@@ -1,95 +1,230 @@
-# Vercel Deployment Guide
+# Deployment Guide - Vercel
 
-## Quick Deploy
+This guide will help you deploy the Jeyam Fancy Store application to Vercel.
 
-### Option 1: Deploy via Vercel Dashboard (Recommended)
+## Prerequisites
 
-1. **Go to Vercel**
-   - Visit [vercel.com](https://vercel.com)
-   - Sign in with your GitHub account
+1. ✅ Google Sheet created and configured (see `GOOGLE_SHEET_SETUP.md`)
+2. ✅ Google Service Account created with credentials
+3. ✅ Google Sheet shared with service account email
+4. ✅ GitHub account (for version control)
 
-2. **Import Project**
-   - Click "Add New..." → "Project"
-   - Select your GitHub repository: `aravinthraj42/jeyam-fancy-store`
-   - Click "Import"
+## Step 1: Prepare Your Code
 
-3. **Configure Project**
-   - **Framework Preset:** Vite (auto-detected)
-   - **Root Directory:** `./` (default)
-   - **Build Command:** `npm run build` (auto-detected)
-   - **Output Directory:** `dist` (auto-detected)
-   - **Install Command:** `npm install` (auto-detected)
+### 1.1 Verify Project Structure
 
-4. **Deploy**
-   - Click "Deploy"
-   - Wait for build to complete
-   - Your app will be live! 🎉
-
-### Option 2: Deploy via Vercel CLI
-
-```bash
-# Install Vercel CLI
-npm i -g vercel
-
-# Login to Vercel
-vercel login
-
-# Deploy
-vercel
-
-# For production deployment
-vercel --prod
+Ensure your project has the following structure:
+```
+jeyam-fancy-store/
+├── app/
+├── lib/
+├── src/
+├── public/
+├── package.json
+├── next.config.js
+├── tailwind.config.js
+└── .gitignore
 ```
 
-## Vercel Configuration
+### 1.2 Test Locally
 
-The `vercel.json` file is already configured with:
+```bash
+# Install dependencies
+npm install
 
-- ✅ Build command: `npm run build`
-- ✅ Output directory: `dist`
-- ✅ SPA routing (all routes redirect to index.html)
-- ✅ Framework: Vite
+# Create .env.local file (see .env.example)
+cp .env.example .env.local
+# Edit .env.local with your credentials
 
-## Environment Variables
+# Test the build
+npm run build
 
-No environment variables needed for this project (all data is stored in localStorage).
+# Test production server
+npm run start
+```
 
-## Post-Deployment
+If the build succeeds, you're ready to deploy!
 
-After deployment:
+## Step 2: Push to GitHub
 
-1. **Test the app**
-   - Visit your Vercel URL
-   - Test guest browsing
-   - Test login (admin1/admin123)
-   - Test admin panel
-   - Test WhatsApp ordering
+### 2.1 Initialize Git (if not already done)
 
-2. **Custom Domain (Optional)**
-   - Go to Project Settings → Domains
-   - Add your custom domain
-   - Follow DNS configuration instructions
+```bash
+git init
+git add .
+git commit -m "Initial commit: Next.js e-commerce with Google Sheets"
+```
+
+### 2.2 Create GitHub Repository
+
+1. Go to [GitHub](https://github.com) and create a new repository
+2. Name it `jeyam-fancy-store` (or your preferred name)
+3. **DO NOT** initialize with README, .gitignore, or license
+
+### 2.3 Push to GitHub
+
+```bash
+git remote add origin https://github.com/YOUR_USERNAME/jeyam-fancy-store.git
+git branch -M main
+git push -u origin main
+```
+
+## Step 3: Deploy to Vercel
+
+### 3.1 Sign Up / Login to Vercel
+
+1. Go to [vercel.com](https://vercel.com)
+2. Sign up or login with your GitHub account
+3. Authorize Vercel to access your GitHub repositories
+
+### 3.2 Import Project
+
+1. Click **"Add New..."** → **"Project"**
+2. Select your `jeyam-fancy-store` repository
+3. Click **"Import"**
+
+### 3.3 Configure Project
+
+Vercel will auto-detect Next.js. You can use default settings:
+
+- **Framework Preset:** Next.js (auto-detected)
+- **Root Directory:** `./` (default)
+- **Build Command:** `npm run build` (default)
+- **Output Directory:** `.next` (default)
+- **Install Command:** `npm install` (default)
+
+### 3.4 Add Environment Variables
+
+**IMPORTANT:** Add these environment variables in Vercel:
+
+1. Click **"Environment Variables"** section
+2. Add each variable:
+
+   ```
+   GOOGLE_SHEET_ID
+   Value: your-google-sheet-id
+   
+   GOOGLE_SERVICE_ACCOUNT_EMAIL
+   Value: your-service-account@project.iam.gserviceaccount.com
+   
+   GOOGLE_PRIVATE_KEY
+   Value: -----BEGIN PRIVATE KEY-----\nYour-Private-Key-Here\n-----END PRIVATE KEY-----\n
+   ```
+
+   **Note:** For `GOOGLE_PRIVATE_KEY`, paste the entire key including:
+   - The `-----BEGIN PRIVATE KEY-----` line
+   - All the key content
+   - The `-----END PRIVATE KEY-----` line
+   - Keep the `\n` characters (they represent newlines)
+
+3. Select **"Production"**, **"Preview"**, and **"Development"** for each variable
+4. Click **"Save"**
+
+### 3.5 Deploy
+
+1. Click **"Deploy"** button
+2. Wait for the build to complete (usually 2-3 minutes)
+3. Your app will be live at `https://your-project-name.vercel.app`
+
+## Step 4: Verify Deployment
+
+### 4.1 Test Your Application
+
+1. Visit your Vercel URL
+2. Test the home page (should load products)
+3. Test the cart functionality
+4. Test admin login at `/admin/login`
+5. Test product/category management
+
+### 4.2 Check Logs
+
+If something doesn't work:
+
+1. Go to your Vercel dashboard
+2. Click on your project
+3. Go to **"Deployments"** tab
+4. Click on the latest deployment
+5. Check **"Functions"** tab for API route logs
+6. Check **"Runtime Logs"** for errors
+
+## Step 5: Custom Domain (Optional)
+
+### 5.1 Add Custom Domain
+
+1. Go to your project settings
+2. Click **"Domains"**
+3. Add your custom domain
+4. Follow DNS configuration instructions
 
 ## Troubleshooting
 
 ### Build Fails
-- Check Node.js version (should be 18+)
-- Ensure all dependencies are in `package.json`
-- Check build logs in Vercel dashboard
 
-### Routing Issues
-- The `vercel.json` already includes SPA rewrites
-- All routes should redirect to `index.html`
+**Error:** `Module not found` or `Cannot find module`
+- **Solution:** Ensure all dependencies are in `package.json`
+- Run `npm install` locally and commit `package-lock.json`
 
-### Performance
-- Vercel automatically optimizes static assets
-- Images are served via CDN
-- No additional configuration needed
+**Error:** `Environment variable not found`
+- **Solution:** Verify all environment variables are set in Vercel
+- Check variable names match exactly (case-sensitive)
+
+### API Routes Return 500
+
+**Error:** `Google Sheets API error`
+- **Solution:** 
+  - Verify `GOOGLE_SHEET_ID` is correct
+  - Verify service account email has Editor access to the sheet
+  - Check `GOOGLE_PRIVATE_KEY` format (must include newlines as `\n`)
+
+**Error:** `Authentication error`
+- **Solution:**
+  - Verify `GOOGLE_SERVICE_ACCOUNT_EMAIL` is correct
+  - Verify `GOOGLE_PRIVATE_KEY` is complete and properly formatted
+
+### Products/Categories Not Loading
+
+1. Check Vercel function logs
+2. Verify Google Sheet structure matches expected format
+3. Verify sheet names are exactly "Categories" and "Products" (case-sensitive)
+4. Test API routes directly: `https://your-app.vercel.app/api/products`
+
+## Environment Variables Reference
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `GOOGLE_SHEET_ID` | Your Google Sheet ID from URL | `1a2b3c4d5e6f7g8h9i0j` |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Service account email | `store@project.iam.gserviceaccount.com` |
+| `GOOGLE_PRIVATE_KEY` | Complete private key from JSON | `-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n` |
+
+## Post-Deployment Checklist
+
+- [ ] Home page loads products correctly
+- [ ] Cart functionality works
+- [ ] Admin login works
+- [ ] Can create/edit/delete products
+- [ ] Can create/edit/delete categories
+- [ ] Stock status updates work
+- [ ] Search and filter work
+- [ ] WhatsApp order functionality works
+
+## Continuous Deployment
+
+Vercel automatically deploys when you push to GitHub:
+
+- **Main branch** → Production deployment
+- **Other branches** → Preview deployments
+
+Every push triggers a new deployment automatically!
 
 ## Support
 
 For issues:
-- Check Vercel documentation: [vercel.com/docs](https://vercel.com/docs)
-- Check build logs in Vercel dashboard
-- Verify all files are committed to GitHub
+1. Check Vercel deployment logs
+2. Check browser console for errors
+3. Verify environment variables
+4. Review `GOOGLE_SHEET_SETUP.md` for Google Sheets configuration
+
+---
+
+**🎉 Congratulations! Your app is now live on Vercel!**
 

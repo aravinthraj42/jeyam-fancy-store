@@ -1,3 +1,5 @@
+'use client';
+
 import { Add, Remove } from '@mui/icons-material';
 import { useCart } from '../context/CartContext';
 import StockStatusBadge from './StockStatusBadge';
@@ -12,11 +14,22 @@ export default function ItemCard({ item }) {
   const cartItem = items.find((cartItem) => cartItem.item.id === item.id);
   const quantity = cartItem ? cartItem.quantity : 0;
 
-  const isOutOfStock = item.stockStatus === 'Out of Stock';
-  const stockStatus = item.stockStatus || 'In Stock';
+  const isOutOfStock = item.stock === 'Out of Stock' || item.stockStatus === 'Out of Stock';
+  const stockStatus = item.stock || item.stockStatus || 'In Stock';
 
   const handleAdd = () => {
-    if (!isOutOfStock) addItem(item);
+    if (!isOutOfStock) {
+      // Map product data to match expected format
+      const cartItem = {
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.imageUrl || item.image,
+        unit: item.unit || 'piece',
+        stockStatus: stockStatus,
+      };
+      addItem(cartItem);
+    }
   };
 
   const handleRemove = () => {
@@ -28,7 +41,7 @@ export default function ItemCard({ item }) {
       {/* Item Image */}
       <div className="w-full h-44 bg-slate-100 rounded-xl overflow-hidden mb-3 relative flex-shrink-0">
         <img
-          src={item.image}
+          src={item.imageUrl || item.image}
           alt={item.name}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           loading="lazy"
@@ -57,7 +70,7 @@ export default function ItemCard({ item }) {
         <div className="flex items-end justify-between">
           <div>
             <p className="text-lg font-bold text-primary-700">₹{item.price}</p>
-            <p className="text-xs text-slate-400">per {item.unit}</p>
+            <p className="text-xs text-slate-400">per {item.unit || 'piece'}</p>
           </div>
           <StockStatusBadge status={stockStatus} />
         </div>
@@ -110,3 +123,4 @@ export default function ItemCard({ item }) {
     </div>
   );
 }
+

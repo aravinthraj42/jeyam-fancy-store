@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * StockStatusBadge Component
  * Polished badge with dot indicator and semantic color palette
@@ -37,9 +39,10 @@ export default function StockStatusBadge({ status }) {
   const style = getStatusStyle(status);
 
   return (
-    <span className={`badge ${style.badge}`}>
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold border ${style.badge}`}>
       <span className={`w-1.5 h-1.5 rounded-full ${style.dot}`} />
       {status}
     </span>
   );
 }
+
